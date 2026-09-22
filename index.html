@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Daein Weon - evaluation and measurement for language models. Papers, research and contact.">
+<meta property="og:title" content="Daein Weon">
+<meta property="og:description" content="Evaluation and measurement for language models.">
+<meta property="og:type" content="website">
+<style>
+  *,*::before,*::after{ box-sizing:border-box; }
+  html{ -webkit-text-size-adjust:100%; }
+  :root{
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+    color-scheme:light dark;
+  }
+  body{ margin:0; }
+  img{ max-width:100%; }
+  [hidden]{ display:none !important; }
+</style>
+<title>Daein Weon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+</head>
+<body>
+<style>
+  :root{
+    --ground:#F4F5F2;
+    --surface:#FBFBF9;
+    --ink:#131A19;
+    --ink-soft:#4A5654;
+    --ink-faint:#8A9693;
+    --rule:#D9DDD8;
+    --rule-strong:#BFC6C1;
+    --accent:#1F6B5E;
+    --accent-soft:rgba(31,107,94,.10);
+    --flag:#C07A16;
+    --shadow:0 1px 0 rgba(19,26,25,.04);
+    --serif:"Instrument Serif",Georgia,"Times New Roman",serif;
+    --sans:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#0C1211;
+      --surface:#121A19;
+      --ink:#E8EDEA;
+      --ink-soft:#A3B0AC;
+      --ink-faint:#6B7975;
+      --rule:#22302D;
+      --rule-strong:#33443F;
+      --accent:#5FBFA9;
+      --accent-soft:rgba(95,191,169,.12);
+      --flag:#D9A441;
+      --shadow:0 1px 0 rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0C1211;
+    --surface:#121A19;
+    --ink:#E8EDEA;
+    --ink-soft:#A3B0AC;
+    --ink-faint:#6B7975;
+    --rule:#22302D;
+    --rule-strong:#33443F;
+    --accent:#5FBFA9;
+    --accent-soft:rgba(95,191,169,.12);
+    --flag:#D9A441;
+    --shadow:0 1px 0 rgba(0,0,0,.3);
+  }
+
+  body{
+    background:var(--ground);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:16px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* scroll ruler ------------------------------------------------------- */
+  .ruler{
+    position:fixed; top:env(safe-area-inset-top,0px); left:0; right:0; height:3px;
+    background:var(--rule); z-index:60;
+  }
+  .ruler__fill{
+    height:100%; width:0%; background:var(--accent);
+    transform-origin:left center;
+  }
+  .ruler__ticks{
+    position:fixed; top:calc(env(safe-area-inset-top,0px) + 3px); left:0; right:0; height:7px;
+    display:flex; justify-content:space-between; pointer-events:none; z-index:60;
+    padding-inline:max(16px, calc(50% - 460px));
+  }
+  .ruler__ticks span{ width:1px; height:5px; background:var(--rule-strong); opacity:.7; }
+  .ruler__ticks span:nth-child(5n+1){ height:7px; background:var(--ink-faint); }
+
+  /* layout ------------------------------------------------------------- */
+  .wrap{
+    max-width:920px; margin-inline:auto;
+    padding-inline:max(20px, env(safe-area-inset-left, 0px));
+    padding-block:0 96px;
+  }
+  section{ padding-block:64px; border-top:1px solid var(--rule); }
+  section:first-of-type{ border-top:0; }
+
+  .eyebrow{
+    font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ink-faint); margin:0 0 20px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::after{ content:""; flex:1; height:1px; background:var(--rule); }
+
+  /* hero --------------------------------------------------------------- */
+  .hero{ position:relative; padding-block:88px 72px; overflow:hidden; }
+  .hero__grid{
+    position:absolute; inset:0; pointer-events:none;
+    background-image:linear-gradient(var(--rule) 1px, transparent 1px);
+    background-size:100% 28px; opacity:.5;
+    mask-image:linear-gradient(to bottom, transparent, #000 25%, #000 60%, transparent);
+    -webkit-mask-image:linear-gradient(to bottom, transparent, #000 25%, #000 60%, transparent);
+  }
+  .crosshair{ position:absolute; inset:0; pointer-events:none; opacity:0; transition:opacity .35s ease; }
+  .crosshair.on{ opacity:1; }
+  .crosshair i{ position:absolute; background:var(--accent); opacity:.38; }
+  .crosshair .h{ left:0; right:0; height:1px; }
+  .crosshair .v{ top:0; bottom:0; width:1px; }
+  .crosshair b{
+    position:absolute; font-family:var(--mono); font-size:10px; color:var(--accent);
+    letter-spacing:.06em; transform:translate(10px,-18px); font-weight:400;
+  }
+
+  h1{
+    font-family:var(--serif); font-weight:400; font-size:clamp(46px,9vw,84px);
+    line-height:.98; letter-spacing:-.015em; margin:0 0 6px; text-wrap:balance;
+    position:relative;
+  }
+  .hero__role{
+    font-family:var(--mono); font-size:12.5px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--accent); margin:0 0 28px;
+  }
+  .hero__bio{
+    font-size:17px; line-height:1.6; max-width:54ch; margin:18px 0 30px;
+    color:var(--ink-soft); text-wrap:pretty;
+  }
+  .hero__meta{
+    display:flex; flex-wrap:wrap; gap:8px 10px; font-family:var(--mono); font-size:12.5px;
+  }
+  .chip{
+    display:inline-flex; align-items:center; gap:7px;
+    border:1px solid var(--rule-strong); border-radius:2px;
+    padding:5px 10px; color:var(--ink-soft); text-decoration:none; background:var(--surface);
+    transition:border-color .2s ease, color .2s ease, transform .2s ease;
+  }
+  .chip:hover{ color:var(--accent); border-color:var(--accent); }
+  .chip .dot{ width:5px; height:5px; background:var(--accent); border-radius:50%; }
+
+  /* prose -------------------------------------------------------------- */
+  .lede{ font-size:17px; max-width:62ch; color:var(--ink); margin:0 0 18px; }
+  .prose{ max-width:62ch; color:var(--ink-soft); margin:0 0 14px; }
+
+  /* research lines ------------------------------------------------------ */
+  .lines{ display:grid; gap:0; margin-top:8px; }
+  .line{
+    display:grid; grid-template-columns:132px 1fr; gap:20px; align-items:start;
+    padding-block:18px; border-top:1px solid var(--rule);
+  }
+  .line:first-child{ border-top:0; }
+  .line__k{
+    font-family:var(--mono); font-size:11.5px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--accent); padding-top:3px;
+  }
+  .line__v{ color:var(--ink-soft); max-width:56ch; }
+  .line__v strong{ color:var(--ink); font-weight:600; }
+
+  /* papers -------------------------------------------------------------- */
+  .papers{ display:grid; gap:0; }
+  .paper{
+    position:relative; display:grid; grid-template-columns:96px 1fr; gap:22px;
+    padding:22px 16px 22px 12px; border-top:1px solid var(--rule);
+    border-radius:3px; transition:background .25s ease;
+  }
+  .paper:first-child{ border-top:0; }
+  .paper:hover{ background:var(--accent-soft); }
+  .paper__status{ font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; }
+  .paper__bar{ display:block; height:3px; width:44px; margin-bottom:9px; border-radius:2px; }
+  .s-pub .paper__bar{ background:var(--accent); }
+  .s-rev .paper__bar{ background:linear-gradient(90deg,var(--flag) 60%, var(--rule) 60%); }
+  .s-pre .paper__bar{ background:repeating-linear-gradient(90deg,var(--ink-faint) 0 5px,transparent 5px 9px); }
+  .s-pub .paper__status span{ color:var(--accent); }
+  .s-rev .paper__status span{ color:var(--flag); }
+  .s-pre .paper__status span{ color:var(--ink-faint); }
+  .paper__year{ display:block; color:var(--ink-faint); font-variant-numeric:tabular-nums; margin-top:3px; }
+  .paper__title{ font-size:17px; font-weight:600; line-height:1.35; margin:0 0 5px; text-wrap:pretty; }
+  .paper__where{ font-family:var(--mono); font-size:12.5px; color:var(--ink-soft); margin:0 0 8px; }
+  .paper__gloss{ font-size:14.5px; color:var(--ink-soft); margin:0 0 10px; max-width:64ch; }
+  .paper__links{ display:flex; flex-wrap:wrap; gap:14px; font-family:var(--mono); font-size:12px; }
+  .paper__links a{
+    color:var(--accent); text-decoration:none; border-bottom:1px solid transparent;
+    padding-bottom:1px; transition:border-color .2s ease;
+  }
+  .paper__links a:hover{ border-bottom-color:var(--accent); }
+
+  .next{
+    margin:26px 0 0; padding-top:18px; border-top:1px solid var(--rule);
+    max-width:64ch; color:var(--ink-soft); font-size:15px;
+  }
+  .next__k{
+    font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--flag); margin-right:10px;
+  }
+  .next em{ font-family:var(--serif); font-style:italic; font-size:1.1em; color:var(--ink); }
+
+  /* experience ---------------------------------------------------------- */
+  .roles{ display:grid; gap:0; }
+  .role{
+    display:grid; grid-template-columns:150px 1fr; gap:20px;
+    padding-block:16px; border-top:1px solid var(--rule);
+  }
+  .role:first-child{ border-top:0; }
+  .role__when{
+    font-family:var(--mono); font-size:12px; color:var(--ink-faint);
+    font-variant-numeric:tabular-nums; padding-top:3px; white-space:nowrap;
+  }
+  .role__what strong{ font-weight:600; }
+  .role__what{ color:var(--ink-soft); }
+  .role__what span{ display:block; font-size:14.5px; margin-top:3px; max-width:58ch; }
+  @media (max-width:640px){
+    .role{ grid-template-columns:1fr; gap:4px; }
+  }
+
+  /* practice note -------------------------------------------------------- */
+  .note{
+    border-left:2px solid var(--flag); padding:4px 0 4px 20px; max-width:62ch;
+    color:var(--ink-soft);
+  }
+  .note strong{ color:var(--ink); font-weight:600; }
+
+  /* contact ------------------------------------------------------------- */
+  .contact{ display:flex; flex-wrap:wrap; gap:10px; }
+  footer{
+    border-top:1px solid var(--rule); padding-block:26px;
+    font-family:var(--mono); font-size:11.5px; color:var(--ink-faint);
+    display:flex; flex-wrap:wrap; gap:12px; justify-content:space-between;
+  }
+  .theme-btn{
+    font-family:var(--mono); font-size:11.5px; color:var(--ink-faint);
+    background:none; border:1px solid var(--rule); border-radius:2px; padding:4px 9px;
+    cursor:pointer; transition:color .2s ease, border-color .2s ease;
+  }
+  .theme-btn:hover{ color:var(--accent); border-color:var(--accent); }
+  a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-offset:3px; }
+
+  @media (max-width:640px){
+    .line{ grid-template-columns:1fr; gap:6px; }
+    .paper{ grid-template-columns:1fr; gap:10px; padding-inline:8px; }
+    .paper__year{ display:inline; margin-left:10px; }
+  }
+
+  /* reveal: visible by default, animated only when JS says so ------------ */
+  .js-motion .reveal{ opacity:.001; transform:translateY(12px); }
+  .js-motion .reveal.in{ opacity:1; transform:none; transition:opacity .6s ease, transform .6s cubic-bezier(.22,.8,.3,1); }
+  @media (prefers-reduced-motion:reduce){
+    .js-motion .reveal, .js-motion .reveal.in{ opacity:1; transform:none; transition:none; }
+    .crosshair{ display:none; }
+  }
+</style>
+
+<div class="ruler" aria-hidden="true"><div class="ruler__fill" id="fill"></div></div>
+<div class="ruler__ticks" id="ticks" aria-hidden="true"></div>
+
+<div class="wrap">
+
+  <header class="hero">
+    <div class="hero__grid" aria-hidden="true"></div>
+    <div class="crosshair" id="cross" aria-hidden="true">
+      <i class="h" id="chH"></i><i class="v" id="chV"></i><b id="chL">0.00</b>
+    </div>
+    <h1>Daein Weon</h1>
+    <p class="hero__bio">
+      B.S. in Computer Science and B.B.A. in AI Big Data Analytics and Statistics,
+      Kookmin University, Seoul (expected February 2027). Reviewer for ICLR 2027.
+      Applying for PhD study starting Fall 2027.
+    </p>
+    <div class="hero__meta">
+      <a class="chip" href="mailto:wdi1024@kookmin.ac.kr"><span class="dot"></span>wdi1024@kookmin.ac.kr</a>
+      <a class="chip" href="https://github.com/wdi1024">GitHub</a>
+      <a class="chip" href="https://openreview.net/profile?id=~Daein_Weon1">OpenReview</a>
+      <a class="chip" href="https://arxiv.org/search/?searchtype=author&amp;query=Daein+Weon">arXiv</a>
+      <button class="theme-btn" id="theme" type="button">theme</button>
+    </div>
+  </header>
+
+  <section class="reveal">
+    <p class="eyebrow">Research</p>
+    <p class="lede">
+      Scores get reported, compared and acted on long before anyone checks what they identify.
+      My work takes an evaluation apart into the score, the span it reads, the proxy label that
+      stands in for the construct, and the rule that turns all of it into a verdict — then tests
+      each link instead of assuming it. Predictions are fixed in dated notes before each run, and
+      the code, per-episode records and those notes are released with every paper.
+    </p>
+    <div class="lines">
+      <div class="line">
+        <div class="line__k">Validity</div>
+        <div class="line__v"><strong>When does agreement mean understanding?</strong> A score and a
+          cheap proxy read from the same text can agree on shared surface evidence rather than on the
+          construct. Re-reading the proxy away from the scored span separates the two.</div>
+      </div>
+      <div class="line">
+        <div class="line__k">Scoring rules</div>
+        <div class="line__v"><strong>The rule is part of the measurement.</strong> Re-scoring identical
+          agent trajectories under rules that differ in one condition moves pass rates by tens of
+          points, and changes how much credit an intervention receives.</div>
+      </div>
+      <div class="line">
+        <div class="line__k">Chance levels</div>
+        <div class="line__v"><strong>What a pooled number can identify.</strong> In stratified
+          evaluations a pooled AUC has no single chance level; the admissible interval can span most
+          of the scale, with the labels alone enough to compute it.</div>
+      </div>
+      <div class="line">
+        <div class="line__k">Acting on it</div>
+        <div class="line__v"><strong>Measurement that changes behaviour.</strong> Inference-time
+          controls — routing, runtime messages, verification gates — that use a diagnostic to decide
+          what a system does next, with no additional training.</div>
+      </div>
+    </div>
+    <p class="next">
+      <span class="next__k">Next</span>
+      I want to take the last one further in two directions. Deeper: what an intervention that reads
+      a diagnostic can be made to <em>guarantee</em>, rather than merely improve on average — which
+      requires knowing when the diagnostic itself is entitled to fire. Wider: multi-agent and
+      reasoning systems, and settings where a wrong claim carries a real cost, so the measurement
+      has to support a decision rather than a ranking.
+    </p>
+  </section>
+
+  <section class="reveal">
+    <p class="eyebrow">Papers</p>
+    <div class="papers">
+
+      <article class="paper s-pub">
+        <div class="paper__status">
+          <span class="paper__bar"></span><span>Published</span>
+          <span class="paper__year">2026</span>
+        </div>
+        <div>
+          <h3 class="paper__title">From Evidence to Exact Answers: Copy-Preserving Compression and
+            Conversion-Aware Calibration for Frozen SLM RAG</h3>
+          <p class="paper__where">EMNLP 2026, Main Conference · Budapest</p>
+          <p class="paper__gloss">A pointer-preserving card compressor and an (interface, prompt)
+            calibrator for retrieval with frozen small readers, over five LongBench tasks and three
+            1.2–4B models.</p>
+        </div>
+      </article>
+
+      <article class="paper s-rev">
+        <div class="paper__status">
+          <span class="paper__bar"></span><span>Under review</span>
+          <span class="paper__year">2027</span>
+        </div>
+        <div>
+          <h3 class="paper__title">Same Trajectories, Different Credit: Scoring-Rule Dependence in
+            Tool-Fault Recovery Evaluation</h3>
+          <p class="paper__where">Submitted to ICLR 2027</p>
+          <p class="paper__gloss">A tool-fault benchmark ships two rules for what an agent may still
+            do after a failure and scores with the stricter one. The same stored trajectories move
+            11–47 points across the two, and the credit given to a recovery instruction halves.</p>
+        </div>
+      </article>
+
+      <article class="paper s-rev">
+        <div class="paper__status">
+          <span class="paper__bar"></span><span>Under review</span>
+          <span class="paper__year">2027</span>
+        </div>
+        <div>
+          <h3 class="paper__title">What a Reported Pooled AUC Identifies When Scores Are Unavailable</h3>
+          <p class="paper__where">Submitted to ICLR 2027</p>
+          <p class="paper__gloss">Sharp bounds on the conditional permutation mean of a pooled AUC,
+            shown attainable and computed from labels alone on public benchmarks.</p>
+        </div>
+      </article>
+
+      <article class="paper s-rev">
+        <div class="paper__status">
+          <span class="paper__bar"></span><span>Under review</span>
+          <span class="paper__year">2027</span>
+        </div>
+        <div>
+          <h3 class="paper__title">The Attribution Contract: Why Step Accuracy Is Not Enough</h3>
+          <p class="paper__where">Submitted to AAAI 2027</p>
+          <p class="paper__gloss">Failure-attribution benchmarks read as a score–proxy–construct
+            contract, audited link by link, then meta-validated on an injected-failure testbed whose
+            labels are verified by re-execution.</p>
+        </div>
+      </article>
+
+      <article class="paper s-pre">
+        <div class="paper__status">
+          <span class="paper__bar"></span><span>Preprint</span>
+          <span class="paper__year">2026</span>
+        </div>
+        <div>
+          <h3 class="paper__title">Auditing Proxy-Based Validation Across Text Spans</h3>
+          <p class="paper__where">Daein Weon, Dong Ho Kang · arXiv, September 2026</p>
+          <p class="paper__gloss">Agreement between a score and a cheap proxy can come from surface
+            evidence the two share. Re-reading the proxy off the scored span separates shared surface
+            from construct, with a pre-registered hold-out reported as undecidable.</p>
+          <p class="paper__links"><a href="https://github.com/wdi1024/rlc-audit">code &amp; analysis outputs</a></p>
+        </div>
+      </article>
+
+      <article class="paper s-pre">
+        <div class="paper__status">
+          <span class="paper__bar"></span><span>Preprint</span>
+          <span class="paper__year">2026</span>
+        </div>
+        <div>
+          <h3 class="paper__title">When Residualization Helps an Audit: Format Effects, Slice Gains,
+            and Their Limits</h3>
+          <p class="paper__where">Daein Weon, Dong Ho Kang · arXiv:2609.24194</p>
+          <p class="paper__gloss">Subtracting a predictable surface component from reward-model and
+            judge scores reduces a format effect but does not transfer outside the template it was
+            fitted on: a diagnostic, not a deployable score.</p>
+          <p class="paper__links">
+            <a href="https://arxiv.org/abs/2609.24194">arXiv:2609.24194</a>
+            <a href="https://github.com/wdi1024/residualization-audit">code &amp; analysis outputs</a>
+          </p>
+        </div>
+      </article>
+
+      <article class="paper s-pre">
+        <div class="paper__status">
+          <span class="paper__bar"></span><span>Preprint</span>
+          <span class="paper__year">2026</span>
+        </div>
+        <div>
+          <h3 class="paper__title">Knowledge-Based Zero-Replay Debugging of Multi-Agent LLM Traces</h3>
+          <p class="paper__where">Dong Ho Kang, Hyeonjeong Cha, Daein Weon · arXiv:2606.14805</p>
+          <p class="paper__gloss">Each trace is compiled into an event knowledge graph so a calibrated
+            ranker predicts what a replay oracle would mark high-effect, lifting held-out localisation
+            from 0.73 to 0.93 Branch Recall@5 at zero replay cost.</p>
+          <p class="paper__links"><a href="https://arxiv.org/abs/2606.14805">arXiv:2606.14805</a></p>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <section class="reveal">
+    <p class="eyebrow">Experience</p>
+    <div class="roles">
+      <div class="role">
+        <span class="role__when">Sep 2025 – Feb 2026</span>
+        <div class="role__what">
+          <strong>Solutions Engineer</strong>, Z-Order · Irvine, CA
+          <span>Analysed customer-issue data for recurring patterns in the response workflow and
+            tested beyond the main user flows, contributing to 10+ critical bug fixes.</span>
+        </div>
+      </div>
+      <div class="role">
+        <span class="role__when">Jun 2025 – Feb 2026</span>
+        <div class="role__what">
+          <strong>Full-Stack Engineer</strong>, K-Spot · Irvine, CA
+          <span>Built a bilingual directory platform (React Native, Next.js, Firebase) and structured
+            the frontend for reuse across mobile and web.</span>
+        </div>
+      </div>
+      <div class="role">
+        <span class="role__when">Mar 2025 – Jun 2025</span>
+        <div class="role__what">
+          <strong>Full-Stack Engineer</strong>, Transity · Irvine, CA
+          <span>Integrated subway data across 190+ cities; cleaned 620,000 entries and loaded 617,123
+            validated records, revising the live schema without downtime.</span>
+        </div>
+      </div>
+      <div class="role">
+        <span class="role__when">Oct 2024 – Nov 2024</span>
+        <div class="role__what">
+          <strong>Team Leader</strong>, AI Big Data Analysis · Kookmin University
+          <span>Led a team predicting trade volume from six years of global economic data, training
+            CNN+LSTM models on 1,081 preprocessed entries.</span>
+        </div>
+      </div>
+      <div class="role">
+        <span class="role__when">Aug 2020 – Feb 2022</span>
+        <div class="role__what">
+          <strong>Sergeant, Intelligence</strong>, Republic of Korea Army · Busan
+          <span>Handled classified material in a security-sensitive role and provided input to
+            operational planning.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Daein Weon · Seoul</span>
+    <span>Last updated September 2026</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var root = document.documentElement;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* theme toggle ------------------------------------------------------- */
+  var btn = document.getElementById('theme');
+  function stored(){ try { return localStorage.getItem('dw-theme'); } catch(e){ return null; } }
+  var saved = stored();
+  if (saved === 'dark' || saved === 'light') root.setAttribute('data-theme', saved);
+  btn.addEventListener('click', function(){
+    var dark = root.getAttribute('data-theme') === 'dark'
+      || (!root.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    var next = dark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('dw-theme', next); } catch(e){}
+  });
+
+  /* ruler ticks + scroll progress -------------------------------------- */
+  var ticks = document.getElementById('ticks');
+  for (var i = 0; i < 41; i++) ticks.appendChild(document.createElement('span'));
+  var fill = document.getElementById('fill');
+  var ticking = false;
+  function onScroll(){
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function(){
+      var h = document.body.scrollHeight - window.innerHeight;
+      var p = h > 0 ? Math.min(1, window.scrollY / h) : 0;
+      fill.style.width = (p * 100).toFixed(2) + '%';
+      ticking = false;
+    });
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  /* section reveal ------------------------------------------------------ */
+  if (!reduce && 'IntersectionObserver' in window) {
+    document.body.classList.add('js-motion');
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, {rootMargin: '0px 0px -12% 0px'});
+    document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+  }
+
+  /* hero crosshair: the cursor reads a position off the page ------------- */
+  var hero = document.querySelector('.hero');
+  var cross = document.getElementById('cross');
+  var chH = document.getElementById('chH'), chV = document.getElementById('chV'), chL = document.getElementById('chL');
+  var fine = window.matchMedia('(pointer: fine)').matches;
+  if (fine && !reduce) {
+    var raf = null, lastX = 0, lastY = 0;
+    hero.addEventListener('pointerenter', function(){ cross.classList.add('on'); });
+    hero.addEventListener('pointerleave', function(){ cross.classList.remove('on'); });
+    hero.addEventListener('pointermove', function(ev){
+      var r = hero.getBoundingClientRect();
+      lastX = ev.clientX - r.left; lastY = ev.clientY - r.top;
+      if (raf) return;
+      raf = requestAnimationFrame(function(){
+        chH.style.top = lastY + 'px';
+        chV.style.left = lastX + 'px';
+        chL.style.left = lastX + 'px';
+        chL.style.top = lastY + 'px';
+        chL.textContent = (lastX / r.width).toFixed(3);
+        raf = null;
+      });
+    });
+  }
+
+  /* magnetic chips ------------------------------------------------------ */
+  if (fine && !reduce) {
+    document.querySelectorAll('.chip').forEach(function(el){
+      el.addEventListener('pointermove', function(ev){
+        var r = el.getBoundingClientRect();
+        var dx = (ev.clientX - (r.left + r.width / 2)) / r.width;
+        var dy = (ev.clientY - (r.top + r.height / 2)) / r.height;
+        el.style.transform = 'translate(' + (dx * 5).toFixed(2) + 'px,' + (dy * 4).toFixed(2) + 'px)';
+      });
+      el.addEventListener('pointerleave', function(){ el.style.transform = ''; });
+    });
+  }
+})();
+</script>
+</body>
+</html>
