@@ -97,6 +97,26 @@
   .ruler__ticks span{ width:1px; height:5px; background:var(--rule-strong); opacity:.7; }
   .ruler__ticks span:nth-child(5n+1){ height:7px; background:var(--ink-faint); }
 
+  /* section marks on the ruler + a readout that stays with you ---------- */
+  .ruler__marks{
+    position:fixed; top:env(safe-area-inset-top,0px); left:0; right:0; height:3px;
+    z-index:61; pointer-events:none;
+  }
+  .ruler__marks i{
+    position:absolute; top:-2px; width:1px; height:7px; background:var(--ink-faint); opacity:.75;
+  }
+  .readout{
+    position:fixed; right:max(16px, calc(50% - 452px)); bottom:22px; z-index:55;
+    font-family:var(--mono); font-size:11px; letter-spacing:.06em; color:var(--ink-faint);
+    background:var(--surface); border:1px solid var(--rule); border-radius:2px;
+    padding:6px 9px; display:flex; gap:9px; align-items:center;
+    opacity:0; transform:translateY(6px); transition:opacity .4s ease, transform .4s ease;
+  }
+  .readout.on{ opacity:1; transform:none; }
+  .readout b{ color:var(--accent); font-weight:500; font-variant-numeric:tabular-nums; }
+  .readout span{ color:var(--ink-faint); }
+  @media (max-width:640px){ .readout{ display:none; } }
+
   /* layout ------------------------------------------------------------- */
   .wrap{
     max-width:920px; margin-inline:auto;
@@ -175,7 +195,19 @@
   .line__v{ color:var(--ink-soft); max-width:56ch; }
   .line__v strong{ color:var(--ink); font-weight:600; }
 
+  .line__k, .role__when{ transition:color .25s ease, transform .25s ease; }
+  .line:hover .line__k{ transform:translateX(4px); }
+  .role:hover .role__when{ color:var(--accent); transform:translateX(4px); }
+
   /* papers -------------------------------------------------------------- */
+  .paper__bar{ transition:width .3s cubic-bezier(.22,.8,.3,1); }
+  .paper__rail{
+    position:absolute; left:0; top:12px; width:2px; height:26px; border-radius:2px;
+    background:var(--accent); opacity:0; transition:opacity .25s ease, transform .12s linear;
+  }
+  .paper:hover .paper__rail{ opacity:.55; }
+
+
   .papers{ display:grid; gap:0; }
   .paper{
     position:relative; display:grid; grid-template-columns:96px 1fr; gap:22px;
@@ -270,6 +302,8 @@
 
 <div class="ruler" aria-hidden="true"><div class="ruler__fill" id="fill"></div></div>
 <div class="ruler__ticks" id="ticks" aria-hidden="true"></div>
+<div class="ruler__marks" id="marks" aria-hidden="true"></div>
+<div class="readout" id="readout" aria-hidden="true"><span id="roSec">top</span><b id="roVal">0.000</b></div>
 
 <div class="wrap">
 
@@ -343,6 +377,7 @@
     <div class="papers">
 
       <article class="paper s-pub">
+        <span class="paper__rail" aria-hidden="true"></span>
         <div class="paper__status">
           <span class="paper__bar"></span><span>Published</span>
           <span class="paper__year">2026</span>
@@ -358,6 +393,7 @@
       </article>
 
       <article class="paper s-rev">
+        <span class="paper__rail" aria-hidden="true"></span>
         <div class="paper__status">
           <span class="paper__bar"></span><span>Under review</span>
           <span class="paper__year">2027</span>
@@ -373,6 +409,7 @@
       </article>
 
       <article class="paper s-rev">
+        <span class="paper__rail" aria-hidden="true"></span>
         <div class="paper__status">
           <span class="paper__bar"></span><span>Under review</span>
           <span class="paper__year">2027</span>
@@ -386,6 +423,7 @@
       </article>
 
       <article class="paper s-rev">
+        <span class="paper__rail" aria-hidden="true"></span>
         <div class="paper__status">
           <span class="paper__bar"></span><span>Under review</span>
           <span class="paper__year">2027</span>
@@ -400,6 +438,7 @@
       </article>
 
       <article class="paper s-pre">
+        <span class="paper__rail" aria-hidden="true"></span>
         <div class="paper__status">
           <span class="paper__bar"></span><span>Preprint</span>
           <span class="paper__year">2026</span>
@@ -415,6 +454,7 @@
       </article>
 
       <article class="paper s-pre">
+        <span class="paper__rail" aria-hidden="true"></span>
         <div class="paper__status">
           <span class="paper__bar"></span><span>Preprint</span>
           <span class="paper__year">2026</span>
@@ -434,6 +474,7 @@
       </article>
 
       <article class="paper s-pre">
+        <span class="paper__rail" aria-hidden="true"></span>
         <div class="paper__status">
           <span class="paper__bar"></span><span>Preprint</span>
           <span class="paper__year">2026</span>
@@ -506,6 +547,7 @@
 <script>
 (function(){
   var root = document.documentElement;
+  var fine = window.matchMedia('(pointer: fine)').matches;
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* theme toggle ------------------------------------------------------- */
@@ -533,6 +575,7 @@
       var h = document.body.scrollHeight - window.innerHeight;
       var p = h > 0 ? Math.min(1, window.scrollY / h) : 0;
       fill.style.width = (p * 100).toFixed(2) + '%';
+      updateReadout(p);
       ticking = false;
     });
   }
@@ -554,7 +597,6 @@
   var hero = document.querySelector('.hero');
   var cross = document.getElementById('cross');
   var chH = document.getElementById('chH'), chV = document.getElementById('chV'), chL = document.getElementById('chL');
-  var fine = window.matchMedia('(pointer: fine)').matches;
   if (fine && !reduce) {
     var raf = null, lastX = 0, lastY = 0;
     hero.addEventListener('pointerenter', function(){ cross.classList.add('on'); });
@@ -571,6 +613,61 @@
         chL.textContent = (lastX / r.width).toFixed(3);
         raf = null;
       });
+    });
+  }
+
+  /* section marks on the ruler, and a readout that follows the scroll ---- */
+  var marks = document.getElementById('marks');
+  var readout = document.getElementById('readout');
+  var roSec = document.getElementById('roSec'), roVal = document.getElementById('roVal');
+  var sections = [].slice.call(document.querySelectorAll('section'));
+  var names = sections.map(function(el){
+    var e = el.querySelector('.eyebrow');
+    return e ? e.textContent.trim().toLowerCase() : 'section';
+  });
+
+  function placeMarks(){
+    var doc = document.body.scrollHeight;
+    marks.innerHTML = '';
+    sections.forEach(function(el){
+      var top = el.getBoundingClientRect().top + window.scrollY;
+      var i = document.createElement('i');
+      i.style.left = ((top / doc) * 100).toFixed(3) + '%';
+      marks.appendChild(i);
+    });
+  }
+  placeMarks();
+  window.addEventListener('resize', placeMarks);
+
+  function current(){
+    var y = window.scrollY + window.innerHeight * 0.35, name = 'top';
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].getBoundingClientRect().top + window.scrollY <= y) name = names[i];
+    }
+    return name;
+  }
+  var lastName = '';
+  function updateReadout(p){
+    if (!readout) return;
+    roVal.textContent = p.toFixed(3);
+    var n = current();
+    if (n !== lastName) { roSec.textContent = n; lastName = n; }
+    readout.classList.toggle('on', window.scrollY > 120);
+  }
+
+  /* paper rows: the status bar reads how close the pointer is ------------ */
+  if (fine && !reduce) {
+    document.querySelectorAll('.paper').forEach(function(row){
+      var bar = row.querySelector('.paper__bar');
+      var rail = row.querySelector('.paper__rail');
+      var base = 44;
+      row.addEventListener('pointermove', function(ev){
+        var r = row.getBoundingClientRect();
+        var x = Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width));
+        bar.style.width = (base + x * 34).toFixed(1) + 'px';
+        if (rail) rail.style.transform = 'translateY(' + (ev.clientY - r.top - 13).toFixed(1) + 'px)';
+      });
+      row.addEventListener('pointerleave', function(){ bar.style.width = ''; });
     });
   }
 
