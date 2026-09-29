@@ -348,15 +348,15 @@
       </div>
       <div class="line">
         <div class="line__k">Scoring rules</div>
-        <div class="line__v"><strong>The rule is part of the measurement.</strong> Re-scoring identical
-          agent trajectories under rules that differ in one condition moves pass rates by tens of
-          points, and changes how much credit an intervention receives.</div>
+        <div class="line__v"><strong>The rule is part of the measurement.</strong> How much a benchmark's
+          scoring rule, rather than the agent, decides the reported result, measured on stored
+          agent trajectories.</div>
       </div>
       <div class="line">
         <div class="line__k">Chance levels</div>
-        <div class="line__v"><strong>What a pooled number can identify.</strong> In stratified
-          evaluations a pooled AUC has no single chance level; the admissible interval can span most
-          of the scale, with the labels alone enough to compute it.</div>
+        <div class="line__v"><strong>What a pooled number can identify.</strong> What a pooled AUC
+          reported for a stratified evaluation can and cannot tell a reader when the underlying
+          scores are not released.</div>
       </div>
       <div class="line">
         <div class="line__k">Acting on it</div>
@@ -405,9 +405,8 @@
           <h3 class="paper__title">Same Trajectories, Different Credit: Scoring-Rule Dependence in
             Tool-Fault Recovery Evaluation</h3>
           <p class="paper__where">Submitted to ICLR 2027</p>
-          <p class="paper__gloss">A tool-fault benchmark ships two rules for what an agent may still
-            do after a failure and scores with the stricter one. The same stored trajectories move
-            11–47 points across the two, and the credit given to a recovery instruction halves.</p>
+          <p class="paper__gloss">How much a tool-fault benchmark's scoring rule, rather than the
+            agent, decides its pass rates and the credit given to a recovery instruction.</p>
         </div>
       </article>
 
@@ -420,8 +419,8 @@
         <div>
           <h3 class="paper__title">What a Reported Pooled AUC Identifies When Scores Are Unavailable</h3>
           <p class="paper__where">Submitted to ICLR 2027</p>
-          <p class="paper__gloss">Sharp bounds on the conditional permutation mean of a pooled AUC,
-            shown attainable and computed from labels alone on public benchmarks.</p>
+          <p class="paper__gloss">What a pooled AUC reported for a stratified evaluation identifies
+            when per-example scores are unavailable.</p>
         </div>
       </article>
 
