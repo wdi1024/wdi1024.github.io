@@ -127,11 +127,13 @@
   section:first-of-type{ border-top:0; }
 
   .eyebrow{
-    font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
-    color:var(--ink-faint); margin:0 0 20px;
-    display:flex; align-items:center; gap:10px;
+    font-family:var(--mono); font-size:13px; font-weight:500; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--ink); margin:0 0 24px;
+    display:flex; align-items:center; gap:12px;
   }
-  .eyebrow::after{ content:""; flex:1; height:1px; background:var(--rule); }
+  .eyebrow::before{ content:""; width:18px; height:3px; background:var(--accent); }
+  .eyebrow::after{ content:""; flex:1; height:1px; background:var(--rule-strong); }
+  section, .paper > div{ scroll-margin-top:24px; }
 
   /* hero --------------------------------------------------------------- */
   .hero{ position:relative; padding-block:88px 72px; overflow:hidden; }
@@ -161,8 +163,12 @@
     font-family:var(--mono); font-size:12.5px; letter-spacing:.1em; text-transform:uppercase;
     color:var(--accent); margin:0 0 28px;
   }
+  .hero__id{
+    font-family:var(--serif); font-size:clamp(19px,2.6vw,23px); line-height:1.45;
+    max-width:46ch; margin:22px 0 0; color:var(--ink); text-wrap:pretty;
+  }
   .hero__bio{
-    font-size:17px; line-height:1.6; max-width:54ch; margin:18px 0 30px;
+    font-size:15.5px; line-height:1.6; max-width:54ch; margin:16px 0 30px;
     color:var(--ink-soft); text-wrap:pretty;
   }
   .hero__meta{
@@ -194,6 +200,12 @@
   }
   .line__v{ color:var(--ink-soft); max-width:56ch; }
   .line__v strong{ color:var(--ink); font-weight:600; }
+  .line__ref{
+    display:block; margin-top:7px; font-family:var(--mono); font-size:12px;
+    color:var(--accent); text-decoration:none; border-bottom:1px solid transparent;
+    width:fit-content; transition:border-color .2s ease;
+  }
+  .line__ref:hover{ border-bottom-color:var(--accent); }
 
   .line__k, .role__when{ transition:color .25s ease, transform .25s ease; }
   .line:hover .line__k{ transform:translateX(4px); }
@@ -313,14 +325,19 @@
       <i class="h" id="chH"></i><i class="v" id="chV"></i><b id="chL">0.00</b>
     </div>
     <h1>Daein Weon</h1>
+    <p class="hero__id">
+      I study what evaluation scores for language-model systems actually establish — and how a
+      system should act on a valid measurement at inference time.
+    </p>
     <p class="hero__bio">
-      B.B.A. in AI Big Data Analytics and Statistics and B.S. in Computer Science (double major),
-      Kookmin University, Seoul (expected February 2027).
+      B.B.A. in AI Big Data Analytics and Statistics; B.S. in Computer Science (double major),
+      Kookmin University, Seoul — expected February 2027.
       I am looking for a PhD position starting Fall 2027 — if this line of work fits what your
       group is doing, or you have a question about any of it, please email me.
     </p>
     <div class="hero__meta">
-      <a class="chip" href="mailto:wdi1024@kookmin.ac.kr"><span class="dot"></span>wdi1024@kookmin.ac.kr</a>
+      <a class="chip" href="mailto:daein4667@gmail.com"><span class="dot"></span>daein4667@gmail.com</a>
+      <a class="chip" href="mailto:wdi1024@kookmin.ac.kr">wdi1024@kookmin.ac.kr</a>
       <a class="chip" href="cv.pdf">CV</a>
       <a class="chip" href="https://github.com/wdi1024">GitHub</a>
       <a class="chip" href="https://openreview.net/profile?id=~Daein_Weon1">OpenReview</a>
@@ -333,45 +350,54 @@
   <section class="reveal">
     <p class="eyebrow">Research</p>
     <p class="lede">
-      Scores get reported, compared and acted on long before anyone checks what they identify.
-      My work takes an evaluation apart into the score, the span it reads, the proxy label that
-      stands in for the construct, and the rule that turns all of it into a verdict — then tests
-      each link instead of assuming it. Predictions are fixed in dated notes before each run, and
-      the code, per-episode records and those notes are released with every paper.
+      Evaluation scores are often reported, compared and acted on before it is clear what they
+      actually identify. My work takes an evaluation apart into the score, the span it reads, the
+      proxy label that stands in for the construct, and the rule that turns all of it into a
+      verdict — then tests each link instead of assuming it.
     </p>
     <div class="lines">
       <div class="line">
         <div class="line__k">Validity</div>
         <div class="line__v"><strong>When does agreement mean understanding?</strong> A score and a
           cheap proxy read from the same text can agree on shared surface evidence rather than on the
-          construct. Re-reading the proxy away from the scored span separates the two.</div>
+          construct. Re-reading the proxy away from the scored span separates the two.
+          <a class="line__ref" href="#p-rlc">→ Auditing Proxy-Based Validation Across Text Spans</a></div>
       </div>
       <div class="line">
         <div class="line__k">Scoring rules</div>
         <div class="line__v"><strong>The rule is part of the measurement.</strong> How much a benchmark's
           scoring rule, rather than the agent, decides the reported result, measured on stored
-          agent trajectories.</div>
+          agent trajectories.
+          <a class="line__ref" href="#p-stdc">→ Same Trajectories, Different Credit</a></div>
       </div>
       <div class="line">
         <div class="line__k">Chance levels</div>
         <div class="line__v"><strong>What a pooled number can identify.</strong> What a pooled AUC
           reported for a stratified evaluation can and cannot tell a reader when the underlying
-          scores are not released.</div>
+          scores are not released.
+          <a class="line__ref" href="#p-auc">→ What a Reported Pooled AUC Identifies When Scores Are Unavailable</a></div>
       </div>
       <div class="line">
         <div class="line__k">Acting on it</div>
         <div class="line__v"><strong>Measurement that changes behaviour.</strong> Inference-time
           controls — routing, runtime messages, verification gates — that use a diagnostic to decide
-          what a system does next, with no additional training.</div>
+          what a system does next, with no additional training.
+          <a class="line__ref" href="#p-emnlp">→ From Evidence to Exact Answers</a></div>
       </div>
     </div>
     <p class="next">
       <span class="next__k">Next</span>
-      I want to take the last one further in two directions. Deeper: what an intervention that reads
+      The first three lines diagnose a measurement; the last one asks what a system should do with
+      it. That connection is where I want to go: once a diagnostic is valid, how should a model or
+      agent change its behaviour at inference time? Deeper: what an intervention that reads
       a diagnostic can be made to <em>guarantee</em>, rather than merely improve on average — which
       requires knowing when the diagnostic itself is entitled to fire. Wider: multi-agent and
       reasoning systems, and settings where a wrong claim carries a real cost, so the measurement
       has to support a decision rather than a ranking.
+    </p>
+    <p class="note" style="margin-top:26px">
+      <strong>Open practice.</strong> Predictions are fixed in dated notes before each run; the code,
+      per-episode records and those notes are released with every paper.
     </p>
   </section>
 
@@ -379,7 +405,7 @@
     <p class="eyebrow">Papers</p>
     <div class="papers">
 
-      <article class="paper s-pub">
+      <article class="paper s-pub" id="p-emnlp">
         <span class="paper__rail" aria-hidden="true"></span>
         <div class="paper__status">
           <span class="paper__bar"></span><span>Published</span>
@@ -401,7 +427,7 @@
           <span class="paper__bar"></span><span>Under review</span>
           <span class="paper__year">2027</span>
         </div>
-        <div>
+        <div id="p-stdc">
           <h3 class="paper__title">Same Trajectories, Different Credit: Scoring-Rule Dependence in
             Tool-Fault Recovery Evaluation</h3>
           <p class="paper__where">Daein Weon, Dong Ho Kang · Submitted to ICLR 2027</p>
@@ -416,7 +442,7 @@
           <span class="paper__bar"></span><span>Under review</span>
           <span class="paper__year">2027</span>
         </div>
-        <div>
+        <div id="p-auc">
           <h3 class="paper__title">What a Reported Pooled AUC Identifies When Scores Are Unavailable</h3>
           <p class="paper__where">Daein Weon, Dong Ho Kang · Submitted to ICLR 2027</p>
           <p class="paper__gloss">What a pooled AUC reported for a stratified evaluation identifies
@@ -459,7 +485,7 @@
           <span class="paper__bar"></span><span>Preprint</span>
           <span class="paper__year">2026</span>
         </div>
-        <div>
+        <div id="p-rlc">
           <h3 class="paper__title">Auditing Proxy-Based Validation Across Text Spans</h3>
           <p class="paper__where">Daein Weon, Dong Ho Kang · arXiv:2609.25808</p>
           <p class="paper__gloss">Agreement between a score and a cheap proxy can come from surface
@@ -543,7 +569,7 @@
 
   <footer>
     <span>Daein Weon · Seoul</span>
-    <span>Last updated September 2026</span>
+    <span>Last updated October 2026</span>
   </footer>
 </div>
 
